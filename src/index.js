@@ -8,15 +8,4 @@ dotenv.config({
 
 
 connectDB()
-/*(async()=> {
- try {
-  await mongoose.connect("mongodb://localhost:27017")  ; 
-  console.log("database connection");
- } catch (error) {
-    console.error("ERROR:",error)
-    throw err
- }   
 
-
-})()
- */
