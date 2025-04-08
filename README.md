@@ -1,1 +1,1 @@
-Backend project
+Backend project by "Hitesh Chaudhary"
