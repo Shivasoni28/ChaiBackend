@@ -6,6 +6,7 @@ dotenv.config({
     path: './env'
 })
 
+
 connectDB()
 /*(async()=> {
  try {
