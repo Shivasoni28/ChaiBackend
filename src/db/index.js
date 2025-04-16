@@ -15,8 +15,8 @@ try {
     throw error
   })
 
-  app.listen(process.env.PORT,()=>{
-    console.log(`App is listening on Port ${process.env.PORT}`)
+  app.listen(process.env.PORT ,()=>{
+    console.log(`App is listening on Port ${process.env.PORT }`);
   })
 } catch (error) {
     console.log("MongoDB connection error",error);

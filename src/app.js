@@ -12,4 +12,8 @@ app.use(cors({
  app.use(express.urlencoded({encoded:true,limit:"16kb"}))
  app.use(express.static("public"))
  app.use(cookieParser())
+
+ //routes
+
+
 export {app}
