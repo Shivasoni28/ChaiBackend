@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 import express from "express";
 import dotenv from 'dotenv';
 dotenv.config();
+import { app } from "../app.js";
 
 
 
-const app= express ()
 const connectDB = async () =>{
 try {
   const connectionInstance =  await mongoose.connect("mongodb://localhost:27017/BackendDatabase")
