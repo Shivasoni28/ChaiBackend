@@ -30,7 +30,10 @@ export const registerUser = asyncHandler(async(req,res)=>{
     throw new ApiError(400,"All fields are required")
    }
    const existedUser= await User.findOne({
-    $or:[{},{}]
+    $or: [
+      { email: email.toLowerCase() },
+      { username: username.toLowerCase() }
+    ]
    })
 
    if(existedUser){

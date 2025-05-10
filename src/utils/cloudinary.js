@@ -20,6 +20,7 @@ export const uploadOnCloudinary = async (localFilePath) => {
       }
   
       console.log("File uploaded on Cloudinary:", response.url);
+      fs.unlinkSync(localFilePath); // Remove the temporary file after upload
       return response;
     } catch (error) {
       console.error("Cloudinary upload error:", error); // Log the error
