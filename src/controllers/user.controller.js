@@ -6,18 +6,28 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 
 
 const generateAccessAndRefreshTokens = async(userId)=>{
+   // req body -> data
+  // username or email 
+  // find the user
+  // password check
+  // generate refresh and access token
+  // send cookie
   try{
    const user= await User.findById(userId);
+    if (!user) throw new ApiError(404, "User not found when generating tokens");
    const accessToken = user.generateAccessToken();
-   const refreshToken = user.generateRefreshtoken();
+   const refreshToken = user.generateRefreshToken();
 
    user.refreshToken= refreshToken;
-   await user.save({ValidatebeforeSave:false});
+   await user.save({ validateBeforeSave: false }).catch(err => {
+  console.error("Save error:", err); // Log DB-level issues
+});
 
    return {accessToken,refreshToken}
   }
   catch(error){
- throw new ApiError(500,"Something went wrong while generating Refresh And Access tokens")
+      console.error("Token generation error:", error); 
+       throw new ApiError(500,"Something went wrong while generating Refresh And Access tokens")
   }
   
 }
@@ -108,49 +118,65 @@ console.log('Request Files:', req.files);
    );
   })
    
-export const loginUser = asyncHandler(async (req, res) =>{
-  // req body -> data
+export const loginUser = asyncHandler(async (req, res) => {
+    // req body -> data
   // username or email 
   // find the user
   // password check
   // generate refresh and access token
   // send cookie
-  const {username,email,password}= req.body
-  if(!username || !email){
-    throw new ApiError(400,"username or email is required")}
+  try {
+    const { username, email, password } = req.body;
+
+    if (!(username || email)) {
+      throw new ApiError(400, "Username or email is required");
+    }
 
     const user = await User.findOne({
-      $or: [{username,email}]
-    })
+      $or: [{ username }, { email }],
+    });
 
-    if(!user){
-      throw new ApiError(404,"User not found")
+    if (!user) {
+      throw new ApiError(404, "User not found");
     }
-   const isPasswordvalid = await user.isPasswordCorrect(password);
-   if(!isPasswordvalid){
-    throw new ApiError(401,"Invalid password");
-   }
 
-   const {accessToken,refreshToken} =  await generateAccessAndRefreshTokens(user,_id);
-   const loggedUser = await User.findById(user._id).select("-password -refreshToken");
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+      throw new ApiError(401, "Invalid password");
+    }
 
-   const options = {
-    httpOnly:true,
-    secure: true
-   }
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
-   return res
-   .status(200)
-   .cookie("accessToken",accessToken,options)
-   .cookie("refreshToken",refreshToken,options)
-   .json(new ApiResponse(200,{
-    user:loggedUser,accessToken,refreshToken
-   },
-   "User Logged in successfully"
-  ))
-})
+    const loggedUser = await User.findById(user._id).select("-password -refreshToken");
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { user: loggedUser, accessToken, refreshToken },
+          "User logged in successfully"
+        )
+      );
+  } catch (error) {
+    console.error("🔥 Login error:", error); 
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
 
 export const logoutUser = asyncHandler(async (req,res)=>{
+  console.log(req.user);
   await  User.findByIdAndUpdate(
     req.user._id,
     {
@@ -171,7 +197,7 @@ export const logoutUser = asyncHandler(async (req,res)=>{
     .status(200)
     .clearCookie("accessToken",options)
     .clearCookie("refreshToken",options)
-    .json(new ApiResponse(200,{},"User logged ut"))
+    .json(new ApiResponse(200,{},"User logged Out successfully"))
 })
 
 export const login = (req, res) => {
