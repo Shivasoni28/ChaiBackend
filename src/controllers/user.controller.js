@@ -84,11 +84,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     ? await uploadOnCloudinary(coverImageLocalPath)
     : "";
 
-  // Create the user
-  if (!avatar?.url) {
-    throw new ApiError(400, "Avatar URL is required");
-  }
-
+  
   const user = await User.create({
     fullname,
     email,
