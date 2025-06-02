@@ -246,7 +246,7 @@ export const login = (req, res) => {
 export const changeCurrentUserPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   const user = await User.findById(req.user?._id);
-  const isPasswordCorrect = await user.isPasswordCorrect(oldPassoword);
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Old Password is Incorrect");
   }
@@ -254,7 +254,7 @@ export const changeCurrentUserPassword = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Passoword changed Successfully"));
+    .json(new ApiResponse(200, {}, "Password changed Successfully"));
 });
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
@@ -297,6 +297,20 @@ export const updateUserAvatar = asyncHandler(async (req, res) => {
   if (!avatar?.url) {
     throw new ApiError(400, "Error while uploading avatar");
   }
+  // todo :delete old avatar from cloudinary
+   const oldAvatar = req.user?.avatar;
+   if(oldAvatar){
+    try {
+      const publicId = getCloudinaryPublicId(oldAvatar);
+      if(publicId){
+        await cloudinary.uploader.destroy(publicId);
+      }
+    } catch (error) {
+      console.log("Error deleting old avatar:",error.message);
+    }
+   }
+   
+  
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
