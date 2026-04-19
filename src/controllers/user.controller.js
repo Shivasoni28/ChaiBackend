@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   // req body -> data
@@ -159,14 +160,13 @@ export const loginUser = asyncHandler(async (req, res) => {
           "User logged in successfully"
         )
       );
-  } catch (error) {
-    console.error("🔥 Login error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Internal Server Error",
-    });
   }
-});
+  catch (error) {
+  console.error(" Login error:", error);
+  throw new ApiError(500, error.message || "Internal Server Error");
+}
+  }
+);
 
 export const logoutUser = asyncHandler(async (req, res) => {
   console.log(req.user);
@@ -195,7 +195,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
 
 export const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
-    req.cookies.refreshToken || req.body.resfreshToken;
+    req.cookies.refreshToken || req.body.refreshToken;
   if (!incomingRefreshToken) {
     throw new ApiError(401, "unauthorized request");
   }
@@ -226,7 +226,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
-      .cookie("newrefreshToken", newrefreshToken, options)
+      .cookie("refreshToken", newrefreshToken, options)
       .json(
         new ApiResponse(
           200,
@@ -260,7 +260,7 @@ export const changeCurrentUserPassword = asyncHandler(async (req, res) => {
 export const getCurrentUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
-    .json(new ApiResponse(200, res.user, "User fetched Succesfully"));
+    .json(new ApiResponse(200, req.user, "User fetched Succesfully"));
 });
 
 export const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -269,7 +269,7 @@ export const updateAccountDetails = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All Fields are required");
   }
 
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -369,7 +369,7 @@ export const getUserChannelProfile = asyncHandler(async (req, res) => {
       },
     },
     {
-      $Lookup: {
+      $lookup: {
         from: "subscriptions",
         localField: "_id",
         foreignField: "channel",
@@ -377,7 +377,7 @@ export const getUserChannelProfile = asyncHandler(async (req, res) => {
       },
     },
     {
-      $Lookup: {
+      $lookup: {
         from: "subscriptions",
         localField: "_id",
         foreignField: "subscriber",
@@ -433,9 +433,9 @@ export const getWatchHistory = asyncHandler(async (req, res) => {
       },
     },
     {
-      $Lookup: {
+      $lookup: {
         from: "videos",
-        LocalField: "watchHistory",
+        localField: "watchHistory",
         foreignField: "_id",
         as: "watchHistory",
         pipeline: [
@@ -456,7 +456,7 @@ export const getWatchHistory = asyncHandler(async (req, res) => {
                 {
                   $addFields: {
                     owner: {
-                      $first: $owner,
+                      $first: "$owner",
                     },
                   },
                 },
